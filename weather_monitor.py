@@ -2,7 +2,6 @@ import requests
 import time
 from datetime import datetime
 import sqlite3
-import json
 
 
 # Configuration
@@ -25,7 +24,6 @@ cursor.execute('''
         timestamp INTEGER
     )
 ''')
-
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS daily_summaries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,7 +84,6 @@ def generate_daily_summary(cursor,conn):
         city, date, avg_temp, max_temp, min_temp, conditions = summary
         conditions_list = conditions.split(',')
         dominant_condition = max(set(conditions_list), key=conditions_list.count)
-       # print('city: {cityname}\tmax_temprature: {max_temp}'.format(cityname=city,max_temp=max_temp))
         cursor.execute('''
             INSERT OR REPLACE INTO daily_summaries
             (city, date, avg_temp, max_temp, min_temp, dominant_condition)
@@ -138,7 +135,13 @@ def print_data(cursor, conn, query):
     
     # Print rows
     for row in rows:
-        print(" | ".join(str(item) for item in row))
+        formatted_row = []
+        for item in row:
+            if isinstance(item, float):
+                formatted_row.append(f"{item:.2f}")
+            else:
+                formatted_row.append(str(item))
+        print(f" | ".join(formatted_row))
     
     print(f"\nTotal rows: {len(rows)}")
 
@@ -146,7 +149,6 @@ def print_data(cursor, conn, query):
 
 
 def main():
-    threshold = int(input("Enter temperature threshold value to generate alerts: "))
     
     while True:
         print("\nMenu:")
@@ -158,6 +160,7 @@ def main():
         choice = input("Enter your choice (1-4): ")
         
         if choice == '1':
+            threshold = int(input("Enter temperature threshold value to generate alerts: "))
             weather_monitor(threshold=threshold)
         elif choice == '2':
             print_weather_data(cursor, conn)

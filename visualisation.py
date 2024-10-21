@@ -2,7 +2,7 @@ import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime, timedelta
+from weather_monitor import CITIES
 
 # Connect to the SQLite database
 conn = sqlite3.connect('weather_data.db')
@@ -23,15 +23,35 @@ weather_data['date'] = weather_data['datetime'].dt.date
 # Convert date to datetime for daily_summaries
 daily_summaries['date'] = pd.to_datetime(daily_summaries['date'])
 
-# 1. Time Series Graph: Daily temperature trends
-def plot_daily_temperature_trends(df, city):
+def main_menu():
+    print("Welcome to the Weather Data Visualization Program!")
+    print("Please select an option:")
+    print("1. Plot Daily Temperature Trends")
+    print("2. Plot Temperature Ranges by City")
+    print("3. Plot Alert Frequency")
+    print("4. Exit")
+
+    choice = input("Enter your choice (1-5): ")
+    return choice
+
+def plot_daily_temperature_trends():
+    print("Available data for the following cities: ")
+    print(",".join(CITIES))
+    city = input("Enter the city name: ")
+    if city not in CITIES:
+        print("Data for the requested city is not available.")
+        return
+
+    plot_daily_temperature_trends_helper(daily_summaries, city)
+
+def plot_daily_temperature_trends_helper(df, city):
     city_data = df[df['city'] == city].sort_values('date')
-    
+
     plt.figure(figsize=(12, 6))
     plt.plot(city_data['date'], city_data['avg_temp'], label='Average')
     plt.plot(city_data['date'], city_data['max_temp'], label='Max')
     plt.plot(city_data['date'], city_data['min_temp'], label='Min')
-    
+
     plt.title(f'Daily Temperature Trends for {city}')
     plt.xlabel('Date')
     plt.ylabel('Temperature (°C)')
@@ -40,46 +60,17 @@ def plot_daily_temperature_trends(df, city):
     plt.tight_layout()
     plt.show()
 
-# 2. Bar Chart: Daily temperature ranges
-def plot_temperature_ranges(df, date):
-    date_data = df[df['date'] == date]
-    
-    plt.figure(figsize=(12, 6))
-    
-    x = range(len(date_data['city']))
-    plt.bar(x, date_data['max_temp'] - date_data['min_temp'], bottom=date_data['min_temp'], label='Range')
-    plt.plot(x, date_data['avg_temp'], 'ro', label='Average')
-    
-    plt.title(f'Temperature Ranges by City on {date}')
-    plt.xlabel('City')
-    plt.ylabel('Temperature (°C)')
-    plt.xticks(x, date_data['city'], rotation=45)
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+def plot_alert_frequency():
+    threshold = float(input("Enter the temperature threshold (°C): "))
+    plot_alert_frequency_helper(daily_summaries, threshold)
 
-# 3. Heat Map: Temperature variations across cities and time
-def plot_temperature_heatmap(df):
-    pivot_df = df.pivot(index='date', columns='city', values='avg_temp')
-    
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(pivot_df, cmap='YlOrRd', annot=True, fmt='.1f', cbar_kws={'label': 'Temperature (°C)'})
-    
-    plt.title('Temperature Variations Across Cities and Time')
-    plt.xlabel('City')
-    plt.ylabel('Date')
-    plt.tight_layout()
-    plt.show()
-
-# 12. Alert Frequency Graph (using temperature threshold as a proxy for alerts)
-def plot_alert_frequency(df, threshold=35):
+def plot_alert_frequency_helper(df, threshold):
     df['alert'] = df['max_temp'] > threshold
     alert_data = df.groupby('date')['alert'].sum().reset_index()
-    
+
     plt.figure(figsize=(12, 6))
     plt.bar(alert_data['date'], alert_data['alert'])
-    
+
     plt.title(f'Alert Frequency Over Time (Temperature > {threshold}°C)')
     plt.xlabel('Date')
     plt.ylabel('Number of Alerts')
@@ -87,10 +78,51 @@ def plot_alert_frequency(df, threshold=35):
     plt.tight_layout()
     plt.show()
 
-# Example usage:
-plot_daily_temperature_trends(daily_summaries, 'Delhi')
-#plot_temperature_ranges(daily_summaries, daily_summaries['date'].min())
-plot_alert_frequency(daily_summaries, threshold=35)
+def plot_temperature_ranges_by_city():
+    plt.figure(figsize=(12, 6))
 
-# Close the database connection
-conn.close()
+    cities = daily_summaries['city'].unique()
+    x = range(len(cities))
+    min_temps = []
+    max_temps = []
+
+    for city in cities:
+        city_data = daily_summaries[daily_summaries['city'] == city]
+        min_temps.append(city_data['min_temp'].mean())
+        max_temps.append(city_data['max_temp'].mean())
+
+    width = 0.2
+    plt.bar(x, min_temps, width=width, label='Minimum Temperature',color="green")
+    plt.bar([i + width for i in x], max_temps, width=width, label='Maximum Temperature',color="red")
+
+    plt.title('Temperature Ranges by City')
+    plt.xlabel('City')
+    plt.ylabel('Temperature (°C)')
+    plt.xticks([i + width/2 for i in x], cities, rotation=45)
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    while True:
+        choice = main_menu()
+
+        if choice == "1":
+            plot_daily_temperature_trends()
+        elif choice == "2":
+            plot_temperature_ranges_by_city()
+        elif choice == "3":
+            plot_alert_frequency()
+        elif choice == "4":
+            print("Exiting the program.")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+    # Close the database connection
+    conn.close()
+
+if __name__ == "__main__":
+    main()
