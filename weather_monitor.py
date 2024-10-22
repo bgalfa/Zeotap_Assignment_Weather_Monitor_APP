@@ -5,7 +5,7 @@ import sqlite3
 
 
 # Configuration
-API_KEY = "8413fc0773dd3acf5e9c6648ec38f0da"
+API_KEY = "your api key here"
 CITIES = ["Delhi", "Mumbai", "Chennai", "Bangalore", "Kolkata", "Hyderabad"]
 UPDATE_INTERVAL = 300  # 5 minutes in seconds
 

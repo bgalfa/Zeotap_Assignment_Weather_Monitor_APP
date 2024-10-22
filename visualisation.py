@@ -60,23 +60,106 @@ def plot_daily_temperature_trends_helper(df, city):
     plt.tight_layout()
     plt.show()
 
+def plot_alert_frequency_helper(df, threshold):
+
+    # Create figure with larger size for better label visibility
+    plt.figure(figsize=(14, 7))
+    
+    # Group data by date and city, finding max temps for each
+    daily_city_temps = df.groupby(['date', 'city'])['max_temp'].max().reset_index()
+    
+    # Create alert mask and get cities exceeding threshold
+    daily_city_temps['alert'] = daily_city_temps['max_temp'] > threshold
+    
+    # Group by date to get alert counts
+    alert_data = daily_city_temps.groupby('date')['alert'].sum().reset_index()
+    
+    # Create the bar plot
+    bars = plt.bar(alert_data['date'], alert_data['alert'], color='coral', alpha=0.7)
+    
+    # For each date, find cities that exceeded threshold
+    for date in alert_data['date'].unique():
+        cities_exceeding = daily_city_temps[
+            (daily_city_temps['date'] == date) & 
+            (daily_city_temps['max_temp'] > threshold)
+        ]
+        
+        if not cities_exceeding.empty:
+            # Get the corresponding bar height
+            bar_height = alert_data[alert_data['date'] == date]['alert'].iloc[0]
+            
+            # Format date string
+            date_str = pd.to_datetime(date).strftime('%Y-%m-%d')
+            
+            # Create formatted text with date and cities
+            text_lines = [f"Date: {date_str}"]
+            text_lines.extend([
+                f"{row['city']}: {row['max_temp']:.1f}°C"
+                for _, row in cities_exceeding.iterrows()
+            ])
+            label_text = '\n'.join(text_lines)
+            
+            # Add text above bar
+            plt.text(
+                date,                          # x position
+                bar_height,                    # y position
+                label_text,                    # text
+                ha='center',                   # horizontal alignment
+                va='bottom',                   # vertical alignment
+                fontsize=8,                    # smaller font size for better fit
+                rotation=0,                    # no rotation
+                bbox=dict(                     # add a background box
+                    facecolor='white',
+                    alpha=0.9,                 # increased opacity for better readability
+                    edgecolor='lightgray',     # light border
+                    pad=1.5,                   # increased padding
+                    boxstyle='round,pad=0.5'   # rounded corners
+                )
+            )
+    
+    # Customize the plot
+    plt.title(f'Alert Frequency Over Time (Temperature > {threshold}°C)', pad=40)
+    plt.xlabel('Date')
+    plt.ylabel('Number of Cities Exceeding Threshold')
+    
+    # Rotate x-axis labels for better readability
+    plt.xticks(rotation=45)
+    
+    # Add grid for better readability
+    plt.grid(True, alpha=0.3)
+    
+    # Adjust layout to prevent label clipping
+    plt.tight_layout()
+    
+    # Add extra padding at the top for labels
+    plt.margins(y=0.2)
+    
+    return plt.gcf()
+
 def plot_alert_frequency():
     threshold = float(input("Enter the temperature threshold (°C): "))
-    plot_alert_frequency_helper(daily_summaries, threshold)
+    
+    try:
+        # Load data from database
+        conn = sqlite3.connect('weather_data.db')
+        daily_summaries = pd.read_sql_query(
+            "SELECT date, city, max_temp FROM daily_summaries",
+            conn
+        )
+        
+        # Convert date strings to datetime objects
+        daily_summaries['date'] = pd.to_datetime(daily_summaries['date'])
+        
+        # Create and show the plot
+        fig = plot_alert_frequency_helper(daily_summaries, threshold)
+        plt.show()
+        
+    except Exception as e:
+        print(f"Error creating visualization: {e}")
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
-def plot_alert_frequency_helper(df, threshold):
-    df['alert'] = df['max_temp'] > threshold
-    alert_data = df.groupby('date')['alert'].sum().reset_index()
-
-    plt.figure(figsize=(12, 6))
-    plt.bar(alert_data['date'], alert_data['alert'])
-
-    plt.title(f'Alert Frequency Over Time (Temperature > {threshold}°C)')
-    plt.xlabel('Date')
-    plt.ylabel('Number of Alerts')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
 
 def plot_temperature_ranges_by_city():
     plt.figure(figsize=(12, 6))
