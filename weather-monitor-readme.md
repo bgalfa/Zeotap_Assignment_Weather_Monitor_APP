@@ -13,10 +13,11 @@ A Python-based weather monitoring system that collects real-time weather data fo
   - Alert frequency visualization
 
 ## Prerequisites
-- Python 3.x
+- Python 3.8 or more
 - Pip package manager
 - OpenWeatherMap API key
-
+- Active network connection
+  
 ## Required Libraries
 ```bash
 pip install -r requirements.txt
