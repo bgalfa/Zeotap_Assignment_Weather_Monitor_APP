@@ -44,27 +44,25 @@ weather-monitoring-system/
 
 ### Weather Data Table
 ```sql
-CREATE TABLE weather_data (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    city TEXT,
-    main TEXT,
-    temp REAL,
-    feels_like REAL,
-    timestamp INTEGER
-)
+> TABLE weather_data 
+   >> id INTEGER PRIMARY KEY AUTOINCREMENT,
+   >> city TEXT,
+   >> main TEXT,
+   >> temp REAL,
+   >> feels_like REAL,
+   >> timestamp INTEGER
 ```
 
 ### Daily Summaries Table
 ```sql
-CREATE TABLE daily_summaries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    city TEXT,
-    date TEXT,
-    avg_temp REAL,
-    max_temp REAL,
-    min_temp REAL,
-    dominant_condition TEXT
-)
+> TABLE daily_summaries 
+   >> id INTEGER PRIMARY KEY AUTOINCREMENT,
+   >> city TEXT,
+   >> date TEXT,
+   >> avg_temp REAL,
+   >> max_temp REAL,
+   >> min_temp REAL,
+   >> dominant_condition TEXT
 ```
 
 ## Configuration
@@ -148,13 +146,3 @@ python visualization.py
 - Data is collected every 5 minutes by default
 - Temperature alerts can be customized with user-defined thresholds
 - Visualization options provide different perspectives on the collected data
-
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-This project is licensed under the MIT License
